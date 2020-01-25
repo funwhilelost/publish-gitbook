@@ -4,12 +4,6 @@
 git config --local user.name "${GITHUB_ACTOR}"
 git config --local user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 
-# check github token
-[ -z "${INPUT_GITHUB_TOKEN}" ] && {
-  echo 'Missing input "github_token: ${{ secrets.GITHUB_TOKEN }}".';
-  exit 1;
-};
-
 # checkout gh-pages branch
 set +e
 git checkout gh-pages || git checkout -b gh-pages
@@ -40,7 +34,17 @@ COMMIT_MESSAGE="Update gitbook `date '+%Y-%m-%d %H:%M:%S'`"
 git commit -a -m "${COMMIT_MESSAGE}"
 
 # setup publisher
-PUBLISHER_REPO="https://${GITHUB_ACTOR}:${INPUT_GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+if [ -n "${GITHUB_TOKEN}" ]; then
+    print_info "using automatic GITHUB_TOKEN"
+    PUBLISHER_REPO="https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+elif [ -n "${INPUT_PERSONAL_TOKEN}" ]; then
+    print_info "using provided PERSONAL_TOKEN"
+    PUBLISHER_REPO="https://x-access-token:${INPUT_PERSONAL_TOKEN}@github.com/${PUBLISH_REPOSITORY}.git"
+else
+    print_error "no PERSONAL_TOKEN or GITHUB_TOKEN found"
+    exit 1
+fi
+
 git remote add publisher ${PUBLISHER_REPO}
 
 # push to the publisher
