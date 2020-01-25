@@ -1,5 +1,13 @@
 #!/bin/sh -l
 
+print_info(){
+  echo -e "\033[32mINFO \033[0m  $@\n" > /dev/stderr
+}
+
+print_error(){
+  echo -e "\033[31mERROR\033[0m \a $@\n" > /dev/stderr
+}
+
 # config git
 git config --local user.name "${GITHUB_ACTOR}"
 git config --local user.email "${GITHUB_ACTOR}@users.noreply.github.com"
@@ -12,17 +20,22 @@ git status
 set -e
 
 # install gitbook
+print_info "installing gitbook-cli"
 npm install gitbook-cli  -g
-gitbook -v
+
+print_info "installing gitbook plugins"
+gitbook --version
 gitbook install
 
 # build gitbook
+print_info "buildling gitbook"
 gitbook build
 
 # copy the static site files into the current directory
 cp -R _book/* .
 
 # remove 'node_modules' and '_book' directory
+print_info "cleaning artifacts"
 git clean -fx node_modules
 git clean -fx _book
 
@@ -48,4 +61,5 @@ fi
 git remote add publisher ${PUBLISHER_REPO}
 
 # push to the publisher
+print_info "pushing to gh-pages branch"
 git push -q -u publisher gh-pages
